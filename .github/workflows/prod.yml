@@ -1,0 +1,63 @@
+---
+
+
+name: "prod infra build"
+
+on:
+  repository_dispatch:
+    types:  [ prod-deploy-event ]
+  
+  push:
+    branches:
+      - prod
+
+
+jobs:
+
+   build:
+
+     runs-on: ubuntu-latest
+
+     steps:
+
+       - name: "checkout repository"
+         uses: actions/checkout@v3
+
+       - name: "terraform installation"
+         uses: hashicorp/setup-terraform@v2
+         with:
+           terraform_version: "1.6.2"
+
+       - name: "terraform init"
+         run: |
+            terraform init \
+            -backend-config="bucket=${{ secrets.PROD_S3_BUCKET }}" \
+            -backend-config="key=terraform.tfstate" \
+            -backend-config="region=${{ secrets.PROD_REGION }}" \
+            -backend-config="access_key=${{ secrets.PROD_ACCESS_KEY }}" \
+            -backend-config="secret_key=${{ secrets.PROD_SECRET_KEY }}" \
+
+       - name: "terraform validate"
+         run: terraform validate
+
+
+       - name: "terraform fmt"
+         run: terraform fmt
+
+
+       - name: "terraform plan"
+         run: terraform plan -var-file=prod.tfvars
+         env:
+            AWS_ACCESS_KEY_ID:  ${{ secrets.PROD_ACCESS_KEY }}
+            AWS_SECRET_ACCESS_KEY:  ${{ secrets.PROD_SECRET_KEY }}
+            AWS_DEFAULT_REGION:  ${{ secrets.PROD_REGION }}
+
+       - name: "terraform apply"
+         run: |
+            terraform apply \
+               -auto-approve \
+               -var-file=prod.tfvars
+         env:
+            AWS_ACCESS_KEY_ID:  ${{ secrets.PROD_ACCESS_KEY }}
+            AWS_SECRET_ACCESS_KEY:  ${{ secrets.PROD_SECRET_KEY }}
+            AWS_DEFAULT_REGION:  ${{ secrets.PROD_REGION }}
