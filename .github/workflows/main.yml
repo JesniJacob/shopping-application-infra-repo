@@ -9,15 +9,15 @@ on:
      inputs:
 
        instance_type:
-          type: choice
-          description: "instance type"
-           options:
-           - t2.micro
-           - t2.small
+         type: choice
+         description: "instance type"
+         options:
+         - t2.micro
+         - t2.small
        
        instance_ami:
          type: string
-         description: "instance ami"
+         description: 'instance ami'
          required: true
 
 
